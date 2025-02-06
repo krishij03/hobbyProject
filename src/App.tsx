@@ -4,6 +4,17 @@ import L from 'leaflet';
 import { useUpvotes } from './hooks/useUpvotes';
 import { supabase } from './lib/supabase';
 import { useVisitCount } from './hooks/useVisitCount';
+import { 
+  funnyQuotes, 
+  getSortedSuttas, 
+  searchSuttas 
+} from './config/suttas';
+import { 
+  getLocationsByArea, 
+  getAllLocations 
+} from './config/locations';
+import { Link } from 'react-router-dom';
+import { BrandCard } from './components/BrandCard';
 
 type Brand = {
   id: string;
@@ -16,11 +27,6 @@ type Brand = {
   flavor: string;
   hindiQuote: string;
   upvotes: number;
-  location?: {
-    lat: number;
-    lng: number;
-    address: string;
-  };
 };
 
 type Location = {
@@ -32,124 +38,6 @@ type Location = {
   lng: number;
   description: string;
 };
-
-const brands: Brand[] = [
-  {
-    id: '1',
-    name: 'Advance',
-    hinglishTagline: 'Boss Level Sutta 🔥',
-    price: '₹20',
-    description: 'For the connoisseur who knows their smoke.',
-    tadkaLevel: 5,
-    image: 'https://images.unsplash.com/photo-1527099908998-5b73a5fe2a0d?auto=format&fit=crop&q=80',
-    flavor: 'Full Power',
-    hindiQuote: 'बॉस की पसंद',
-    upvotes: 0,
-    location: {
-      lat: 19.0760,
-      lng: 72.8777,
-      address: 'Near Gateway of India, Colaba'
-    }
-  },
-  {
-    id: '2',
-    name: 'Light',
-    hinglishTagline: 'Halka Fulka Scenes',
-    price: '₹15',
-    description: 'When you want to keep it light and breezy.',
-    tadkaLevel: 2,
-    image: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?auto=format&fit=crop&q=80',
-    flavor: 'Easy Going',
-    hindiQuote: 'हल्का फुल्का मज़ा',
-    upvotes: 0,
-    location: {
-      lat: 19.1071,
-      lng: 72.8265,
-      address: 'Linking Road, Bandra West'
-    }
-  },
-  {
-    id: '3',
-    name: 'Clovemix',
-    hinglishTagline: 'Masaledar Vibes',
-    price: '₹18',
-    description: 'Spice up your smoke break with a hint of clove.',
-    tadkaLevel: 4,
-    image: 'https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?auto=format&fit=crop&q=80',
-    flavor: 'Spicy Mix',
-    hindiQuote: 'मसालेदार धमाका',
-    upvotes: 0,
-    location: {
-      lat: 0,
-      lng: 0,
-      address: ''
-    }
-  }
-];
-
-const suttaSpots: Location[] = [
-  {
-    id: '1',
-    name: 'Gateway Paan Corner',
-    address: 'Near Gateway of India, Colaba',
-    area: 'colaba',
-    lat: 18.9217,
-    lng: 72.8347,
-    description: 'Famous for classic suttas since 1960'
-  },
-  {
-    id: '2',
-    name: 'Linking Road Smoke Shop',
-    address: 'Linking Road, Bandra West',
-    area: 'bandra',
-    lat: 19.0596,
-    lng: 72.8295,
-    description: 'Best variety of flavors'
-  },
-  {
-    id: '3',
-    name: 'Juhu Beach Pan Shop',
-    address: 'Juhu Beach Road',
-    area: 'juhu',
-    lat: 19.0883,
-    lng: 72.8263,
-    description: 'Beachside smoking spot'
-  },
-  {
-    id: '4',
-    name: 'Andheri Station East',
-    address: 'Outside Andheri Station East',
-    area: 'andheri',
-    lat: 19.1136,
-    lng: 72.8697,
-    description: 'Local favorite spot'
-  },
-  {
-    id: '5',
-    name: 'Ghatkopar Market',
-    address: 'Near Ghatkopar Station',
-    area: 'ghatkopar',
-    lat: 19.0785,
-    lng: 72.9080,
-    description: '24/7 sutta spot'
-  },
-  {
-    id: '6',
-    name: 'Borivali West',
-    address: 'Near Borivali Station West',
-    area: 'borivali',
-    lat: 19.2321,
-    lng: 72.8567,
-    description: 'Premium quality pan shop'
-  }
-];
-
-const funnyQuotes = [
-  "Chai ke saath special scene ✨",
-  "Tension? Bhool jao 💨",
-  "Break time = Sutta time 🌟",
-  "Yaar tera superstar 🎭"
-];
 
 function PixelHeart({ filled }: { filled: boolean }) {
   return (
@@ -170,10 +58,18 @@ function PixelHeart({ filled }: { filled: boolean }) {
 
 function TadkaLevel({ level }: { level: number }) {
   return (
-    <div className="flex space-x-1">
-      {[1, 2, 3, 4, 5].map((heart) => (
-        <PixelHeart key={heart} filled={heart <= level} />
+    <div className="flex items-center space-x-1">
+      {[...Array(5)].map((_, index) => (
+        <span 
+          key={index}
+          className={`text-lg ${index < level ? 'text-red-500' : 'text-gray-300'}`}
+        >
+          ♥
+        </span>
       ))}
+      <span className="ml-2 text-sm text-brown-700 font-hindi">
+        तड़का {level}/5
+      </span>
     </div>
   );
 }
@@ -272,89 +168,12 @@ function TouchSmokeTrail() {
   return null;
 }
 
-function BrandCard({ brand, onUpvote }: { brand: Brand; onUpvote: (brandId: string) => void }) {
-  const { handleUpvote, hasUpvoted, isLoading } = useUpvotes(onUpvote);
-
-  return (
-    <div className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-      <div className="relative">
-        <img
-          src={brand.image}
-          alt={brand.name}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110 filter grayscale hover:grayscale-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-2xl font-bold text-brown-900">
-              {brand.name}
-            </h3>
-            <p className="text-brown-700">
-              {brand.hinglishTagline}
-            </p>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-brown-900 font-bold text-xl">{brand.price}</span>
-            <div className="flex items-center mt-1">
-              <Wind className="h-4 w-4 text-brown-600 mr-1" />
-              <span className="text-sm text-brown-700">
-                {brand.flavor}
-              </span>
-            </div>
-          </div>
-        </div>
-        <p className="text-gray-700 mb-4">
-          {brand.description}
-        </p>
-        <div className="flex items-center justify-between">
-          <TadkaLevel level={brand.tadkaLevel} />
-          <span className="text-sm text-brown-700 font-hindi">
-            तड़का Level
-          </span>
-        </div>
-        <p className="text-center mt-4 text-brown-600 font-hindi text-sm">
-          {brand.hindiQuote}
-        </p>
-        <div className="flex items-center justify-between p-4 border-t border-gray-100">
-          <button 
-            onClick={() => handleUpvote(brand.id)}
-            disabled={isLoading || hasUpvoted(brand.id)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full 
-              ${hasUpvoted(brand.id) 
-                ? 'bg-brown-200 cursor-not-allowed' 
-                : isLoading 
-                  ? 'bg-brown-100 cursor-wait' 
-                  : 'bg-brown-100 hover:bg-brown-200'} 
-              transition-colors`}
-          >
-            <Star 
-              className={`h-4 w-4 ${
-                hasUpvoted(brand.id) 
-                  ? 'text-yellow-500 fill-yellow-500' 
-                  : 'text-gray-400'
-              } ${isLoading ? 'animate-spin' : ''}`} 
-            />
-            <span>{brand.upvotes}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MumbaiMap() {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [areaSearch, setAreaSearch] = useState('');
 
-  // Filter spots based on area search
-  const filteredSpots = suttaSpots.filter(spot =>
-    spot.area.toLowerCase().includes(areaSearch.toLowerCase()) ||
-    spot.name.toLowerCase().includes(areaSearch.toLowerCase()) ||
-    spot.address.toLowerCase().includes(areaSearch.toLowerCase())
-  );
+  const filteredSpots = getLocationsByArea(areaSearch);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -475,16 +294,20 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentQuote, setCurrentQuote] = useState(0);
-  const [brandsState, setBrandsState] = useState(brands);
+  const [brandsState, setBrandsState] = useState(getSortedSuttas(3)); // Only top 3 for mobile
+  const [selectedArea, setSelectedArea] = useState('');
+  const [locations, setLocations] = useState(getLocationsByArea(''));
   const visitCount = useVisitCount();
 
-  const filteredBrands = brandsState.filter(brand => 
-    brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    brand.hinglishTagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    brand.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    brand.flavor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    brand.hindiQuote.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBrands = searchQuery
+    ? brandsState.filter(brand =>
+        brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        brand.hinglishTagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        brand.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        brand.flavor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        brand.hindiQuote.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : brandsState;
 
   // Handle successful upvote
   const handleUpvoteSuccess = (brandId: string) => {
@@ -554,6 +377,11 @@ function App() {
     };
   }, []);
 
+  // Update locations when area changes
+  useEffect(() => {
+    setLocations(getLocationsByArea(selectedArea));
+  }, [selectedArea]);
+
   return (
     <div className="min-h-screen bg-white">
       <TouchSmokeTrail />
@@ -567,7 +395,7 @@ function App() {
             </div>
             <h1 className="text-xl font-bold">
               Aaj Kya Phookoge?
-              <span className="text-brown-600 text-sm ml-2 font-hindi">सुट्टा टाइम</span>
+              
             </h1>
           </div>
           <button
@@ -600,15 +428,15 @@ function App() {
             <p className="text-xl mb-2 italic font-hindi text-brown-600">
               {funnyQuotes[currentQuote]}
             </p>
-            <p className="text-lg text-brown-600 mt-4">
+            <p className="text-lg text-brown-600 mt-4 mb-16">
               You are the <span className="font-bold text-brown-900">{visitCount}</span> suttebaaz here
             </p>
           </div>
-          <div className="w-full max-w-md relative transform hover:scale-105 transition-transform">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 animate-bounce" />
+          <div className="w-full max-w-md relative transform hover:scale-105 transition-transform mb-16">
+            <Search className="absolute left-3 top-[35%] transform -translate-y-1/2 text-gray-400 animate-bounce" />
             <input
               type="text"
-              placeholder="Konsa Chahiye Bhai? 🔍"
+              placeholder="Konsa Chahiye Bhai? 🚬"
               className="w-full pl-10 pr-4 py-3 rounded-full bg-gray-50 border border-gray-200 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brown-400 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -618,7 +446,7 @@ function App() {
       </div>
 
       {/* Brands Section */}
-      <section id="brands" className="container mx-auto px-4 py-16">
+      <section id="brands" className="container mx-auto px-4 py-1">
         <h2 className="text-4xl font-bold text-center mb-4 text-brown-900">
           Scene On Hai
         </h2>
@@ -633,6 +461,14 @@ function App() {
               onUpvote={handleUpvoteSuccess}
             />
           ))}
+        </div>
+        <div className="text-center mt-8">
+          <Link 
+            to="/catalogue"
+            className="inline-block bg-brown-600 text-white px-6 py-3 rounded-full"
+          >
+            View Full Catalogue
+          </Link>
         </div>
       </section>
 
@@ -678,8 +514,14 @@ function App() {
             <p className="mb-4">
               © 2024 - All Rights Reserved
             </p>
-            <p className="text-brown-600 text-sm">
+            <p className="text-brown-600 text-sm mb-2">
               Disclaimer: This website is for informational purposes only.
+            </p>
+            <p className="text-red-600 text-sm font-bold mb-4">
+              WARNING: Tobacco is injurious to health. Smoking kills.
+            </p>
+            <p className="text-brown-500 text-xs italic">
+              Made by Anonymous (kyuki baap dekhega toh maarega.)
             </p>
           </div>
         </div>

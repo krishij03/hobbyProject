@@ -1,27 +1,18 @@
-# Sutta Time
+# Project Documentation
 
-Your Smoke Break Companion - A web app for finding and rating smoke spots in Mumbai.
+## Overview
+A simple React-based web application that demonstrates basic CRUD operations and map integration. Built as a learning exercise for TypeScript and Tailwind CSS.
 
-## Features
-- Browse and rate different sutta spots
-- Real-time upvote system
-- Interactive Mumbai map
-- Area-based search
-- Visit counter
-- Mobile-responsive design
-
-## Tech Stack
-- React + TypeScript
-- Vite
+## Technical Stack
+- React
+- TypeScript
 - Tailwind CSS
 - Supabase
 - Leaflet Maps
 
-## Development
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Create `.env` file with Supabase credentials
-4. Run development server: `npm run dev`
-
-## Deployment
-Deployed on Vercel: [Your-App-URL] 
+## Features
+- Responsive design
+- Search functionality
+- Interactive map
+- Real-time updates
+- User visit counter
