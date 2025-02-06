@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Cigarette, Search, Menu, X, ChevronDown, Star, Cloud, Wind, MapPin } from 'lucide-react';
+import { Cigarette, Search, Menu, X, ChevronDown, Star, Cloud, Wind, MapPin, Send, Mail } from 'lucide-react';
 import L from 'leaflet';
 import { useUpvotes } from './hooks/useUpvotes';
 import { supabase } from './lib/supabase';
@@ -312,6 +312,56 @@ function MumbaiMap() {
   );
 }
 
+function FeedbackForm() {
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    
+    // Open default mail client with pre-filled message
+    window.location.href = `mailto:contact@sutta.me?subject=Sutta Website Feedback&body=${encodeURIComponent(message)}`;
+    
+    setSending(false);
+    setSent(true);
+    setMessage('');
+    
+    // Reset sent status after 3 seconds
+    setTimeout(() => setSent(false), 3000);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto mt-8">
+      <div className="bg-brown-50 p-6 rounded-xl">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Mail className="w-5 h-5" />
+          Send us feedback!
+        </h3>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Tell us about your favorite sutta spots! If we're missing a sutta, include the brand name, price, and exact location (Google Maps link if possible) of where people can find it & we'll add it to the website!"
+          className="w-full p-3 rounded-lg border border-brown-200 focus:ring-2 focus:ring-brown-400 focus:border-transparent min-h-[120px]"
+          required
+        />
+        <button
+          type="submit"
+          disabled={sending || !message}
+          className={`mt-3 px-6 py-2 rounded-full flex items-center justify-center gap-2 w-full
+            ${sending || !message 
+              ? 'bg-gray-300 cursor-not-allowed' 
+              : 'bg-brown-600 hover:bg-brown-700'} text-white transition-colors`}
+        >
+          {sending ? 'Sending...' : sent ? 'Sent!' : 'Send Feedback'}
+          <Send className={`w-4 h-4 ${sending ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -553,6 +603,7 @@ function App() {
             <p className="text-brown-500 text-xs italic">
               Made by Anonymous (kyuki baap dekhega toh maarega.)
             </p>
+            <FeedbackForm />
           </div>
         </div>
       </footer>
