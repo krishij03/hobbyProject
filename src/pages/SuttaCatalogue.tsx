@@ -7,6 +7,17 @@ export function SuttaCatalogue() {
   const [searchQuery, setSearchQuery] = useState('');
   const [suttas, setSuttas] = useState(getSortedSuttas());
 
+  // Apply search filter to current suttas state instead of getting new ones
+  const filteredSuttas = searchQuery 
+    ? suttas.filter(sutta => 
+        sutta.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sutta.hinglishTagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sutta.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sutta.flavor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sutta.hindiQuote.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : suttas;
+
   // Fetch initial sutta data with upvotes
   useEffect(() => {
     const fetchSuttas = async () => {
@@ -20,13 +31,14 @@ export function SuttaCatalogue() {
       }
 
       if (brandData) {
+        // Sort suttas by upvotes when setting initial state
         setSuttas(current =>
           current.map(sutta => {
             const dbBrand = brandData.find(b => b.id === sutta.id);
             return dbBrand 
               ? { ...sutta, upvotes: dbBrand.upvotes }
               : sutta;
-          })
+          }).sort((a, b) => b.upvotes - a.upvotes)
         );
       }
     };
@@ -48,7 +60,7 @@ export function SuttaCatalogue() {
             sutta.id === payload.new.id 
               ? { ...sutta, upvotes: payload.new.upvotes }
               : sutta
-          )
+          ).sort((a, b) => b.upvotes - a.upvotes)
         );
       })
       .subscribe();
@@ -65,11 +77,9 @@ export function SuttaCatalogue() {
         sutta.id === suttaId
           ? { ...sutta, upvotes: sutta.upvotes + 1 }
           : sutta
-      )
+      ).sort((a, b) => b.upvotes - a.upvotes)
     );
   };
-
-  const filteredSuttas = searchQuery ? searchSuttas(searchQuery) : suttas;
 
   return (
     <div className="min-h-screen bg-white py-16">

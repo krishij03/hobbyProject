@@ -90,7 +90,86 @@ export const locations: Location[] = [
     rating: 4.6,
     availableBrands: ['1', '2', '3'],
     isVerified: true
-  }
+  },
+  {
+    id: '7',
+    name: 'Alfredo\'s Pan Shop',
+    address: 'Opposite Alfredo\'s, Juhu Tara Road',
+    area: 'juhu',
+    lat: 19.0968,
+    lng: 72.8265,
+    description: 'Known for a wide variety of imported cigarettes and cigars.',
+    isOpen24Hours: false,
+    rating: 4.7,
+    availableBrands: ['4', '5', '6'],
+    isVerified: true
+},
+{
+    id: '8',
+    name: 'Mucchad Paanwala',
+    address: 'Kemps Corner, Near Shalimar Hotel',
+    area: 'kemps corner',
+    lat: 18.9683,
+    lng: 72.8055,
+    description: 'Famous for its diverse selection of cigarettes and paan.',
+    isOpen24Hours: false,
+    rating: 4.6,
+    availableBrands: ['1', '2', '3', '4'],
+    isVerified: true
+},
+{
+    id: '9',
+    name: 'Smoke Shop Bandra',
+    address: 'Hill Road, Bandra West',
+    area: 'bandra',
+    lat: 19.0559,
+    lng: 72.8295,
+    description: 'Offers a variety of imported and local cigarette brands.',
+    isOpen24Hours: true,
+    rating: 4.5,
+    availableBrands: ['1', '2', '5'],
+    isVerified: true
+},
+{
+    id: '10',
+    name: 'Camel Cigarette Shop',
+    address: 'Carter Road, Bandra West',
+    area: 'bandra',
+    lat: 19.0635,
+    lng: 72.8236,
+    description: 'Popular spot for Camel and other international brands.',
+    isOpen24Hours: false,
+    rating: 4.4,
+    availableBrands: ['5', '6', '7'],
+    isVerified: true
+},
+{
+    id: '11',
+    name: 'Irla Road Paan Shop',
+    address: 'Irla Road, Vile Parle West',
+    area: 'vile parle',
+    lat: 19.1036,
+    lng: 72.8365,
+    description: 'Known for its collection of imported cigarettes.',
+    isOpen24Hours: false,
+    rating: 4.3,
+    availableBrands: ['4', '5'],
+    isVerified: true
+},
+{
+    id: '12',
+    name: 'Patil Juice Center Tapri',
+    address: 'Next to Patil Juice Center, Charni Road',
+    area: 'charni road',
+    lat: 18.9543,
+    lng: 72.8180,
+    description: 'A local favorite spot for various cigarette brands.',
+    isOpen24Hours: false,
+    rating: 4.2,
+    availableBrands: ['1', '2', '3'],
+    isVerified: true
+}
+
 ];
 
 export const getLocationsByArea = (area: string) => {

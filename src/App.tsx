@@ -7,7 +7,8 @@ import { useVisitCount } from './hooks/useVisitCount';
 import { 
   funnyQuotes, 
   getSortedSuttas, 
-  searchSuttas 
+  searchSuttas,
+  Sutta
 } from './config/suttas';
 import { 
   getLocationsByArea, 
@@ -172,6 +173,8 @@ function MumbaiMap() {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [areaSearch, setAreaSearch] = useState('');
+  const markersRef = useRef<L.Marker[]>([]);
+  const prevSearchRef = useRef(areaSearch);
 
   const filteredSpots = getLocationsByArea(areaSearch);
 
@@ -187,6 +190,22 @@ function MumbaiMap() {
       attribution: '© OpenStreetMap contributors'
     }).addTo(mapRef.current);
 
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Separate effect for handling markers
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
     // Custom icon for markers
     const customIcon = L.divIcon({
       className: 'custom-marker',
@@ -201,7 +220,9 @@ function MumbaiMap() {
 
     // Update markers based on filtered spots
     filteredSpots.forEach(spot => {
-      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon }).addTo(mapRef.current!);
+      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
+      markersRef.current.push(marker);
+      marker.addTo(mapRef.current!);
       
       // Create popup content with Google Maps link
       const popupContent = document.createElement('div');
@@ -221,13 +242,14 @@ function MumbaiMap() {
       marker.bindPopup(popupContent);
     });
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [filteredSpots]); // Update when filtered spots change
+    // Only fit bounds when search changes and there are results
+    if (filteredSpots.length > 0 && prevSearchRef.current !== areaSearch) {
+      const bounds = L.latLngBounds(filteredSpots.map(spot => [spot.lat, spot.lng]));
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    prevSearchRef.current = areaSearch;
+  }, [filteredSpots, areaSearch]); // Update when spots or search changes
 
   return (
     <section id="locations" className="py-16 bg-white">
@@ -294,10 +316,19 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentQuote, setCurrentQuote] = useState(0);
-  const [brandsState, setBrandsState] = useState(getSortedSuttas(3)); // Only top 3 for mobile
+  const [brandsState, setBrandsState] = useState<Sutta[]>([]); // Properly typed empty array
   const [selectedArea, setSelectedArea] = useState('');
   const [locations, setLocations] = useState(getLocationsByArea(''));
   const visitCount = useVisitCount();
+
+  // Add auto-refresh for quotes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentQuote(current => (current + 1) % funnyQuotes.length);
+    }, 2000); // Changes every 2 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredBrands = searchQuery
     ? brandsState.filter(brand =>
@@ -333,13 +364,17 @@ function App() {
       }
 
       if (brandData) {
-        setBrandsState(current =>
-          current.map(brand => {
-            const dbBrand = brandData.find(b => b.id === brand.id);
-            return dbBrand 
-              ? { ...brand, upvotes: dbBrand.upvotes }
-              : brand;
-          })
+        // Get all suttas, update their upvotes, sort them, and take top 3
+        setBrandsState(
+          getSortedSuttas()
+            .map(brand => {
+              const dbBrand = brandData.find(b => b.id === brand.id);
+              return dbBrand 
+                ? { ...brand, upvotes: dbBrand.upvotes }
+                : brand;
+            })
+            .sort((a, b) => b.upvotes - a.upvotes)
+            .slice(0, 3)  // Only take top 3 for main page
         );
       }
     };
@@ -361,16 +396,11 @@ function App() {
               ? { ...brand, upvotes: payload.new.upvotes }
               : brand
           )
+          .sort((a, b) => b.upvotes - a.upvotes)
+          .slice(0, 3)  // Keep only top 3 after sorting
         );
       })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to real-time changes');
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error('Failed to subscribe to real-time changes');
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -423,9 +453,9 @@ function App() {
               सुट्टा टाइम
             </h1>
             <p className="text-2xl mb-2 animate-pulse text-brown-700">
-              Your Smoke Break Companion
+              Your Unsolicited Smoke Break Companion
             </p>
-            <p className="text-xl mb-2 italic font-hindi text-brown-600">
+            <p className="text-xl mb-2 font-hindi text-brown-600">
               {funnyQuotes[currentQuote]}
             </p>
             <p className="text-lg text-brown-600 mt-4 mb-16">
@@ -448,7 +478,7 @@ function App() {
       {/* Brands Section */}
       <section id="brands" className="container mx-auto px-4 py-1">
         <h2 className="text-4xl font-bold text-center mb-4 text-brown-900">
-          Scene On Hai
+          Top Suttas
         </h2>
         <p className="text-center text-brown-700 mb-12 font-hindi">
           मस्त सुट्टे

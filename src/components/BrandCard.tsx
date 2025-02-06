@@ -11,7 +11,7 @@ export function BrandCard({ brand, onUpvote }: { brand: Sutta; onUpvote?: (brand
         <img
           src={brand.image}
           alt={brand.name}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110 filter grayscale hover:grayscale-0"
+          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
